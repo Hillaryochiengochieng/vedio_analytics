@@ -1,0 +1,32 @@
+import cv2
+import face_recognition
+import numpy as np
+
+# Load target person's image and compute encoding
+target_image = face_recognition.load_image_file("target.jpg")
+target_encoding = face_recognition.face_encodings(target_image)[0]
+
+# Connect to webcam or video stream
+video_capture = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = video_capture.read()
+    if not ret:
+        break
+
+    face_locations = face_recognition.face_locations(frame)
+    face_encodings = face_recognition.face_encodings(frame, face_locations)
+
+    for face_encoding, location in zip(face_encodings, face_locations):
+        matches = face_recognition.compare_faces([target_encoding], face_encoding, tolerance=0.5)
+        if matches[0]:
+            top, right, bottom, left = location
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+            cv2.putText(frame, "MATCH FOUND", (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+    cv2.imshow('Video Feed', frame)
+    if cv2.waitKey(1) == 27:  # ESC key
+        break
+
+video_capture.release()
+cv2.destroyAllWindows()
